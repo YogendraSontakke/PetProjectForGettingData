@@ -38,14 +38,22 @@ def get_market_cap_and_name(i_security_code):
         'X-Requested-With' : 'XMLHttpRequest',
         'Referer' : ''
     }
-    headers['Referer'] = get_requester_url(i_security_code)
+    headers['Referer'] = get_requester_url(i_security_code)       
+    referer_missing = False
+    if headers['Referer'] == '':
+        referer_missing = True
+        print 'Referer Missing :', i_security_code
+        headers['Referer'] = 'http://www.bseindia.com'
+        #return [i_security_code, '0', 'Referer Missing // Not Found']
     
     html = get_post_services.get_html_data(url, params=data, headers=headers)
     while html is None:
         html = get_post_services.get_html_data(url, params=data, headers=headers)
     soup = BeautifulSoup(html, 'lxml')    
-    
-    return [i_security_code, soup.find(id='ehd6')['value'].replace(',','').replace('-','0'), headers['Referer'].split('/')[4]]
+    if referer_missing == False:
+        return [i_security_code, soup.find(id='ehd6')['value'].replace(',','').replace('-','0'), headers['Referer'].split('/')[4]]
+    else:
+        return [i_security_code, soup.find(id='ehd6')['value'].replace(',','').replace('-','0'), i_security_code]
 
 def get_52_week_high_html():
     #52 week high html
@@ -87,8 +95,8 @@ def get_requester_url(i_security_code):
             html = get_post_services.get_html_data(url, params=data)    
         soup = BeautifulSoup(html, 'lxml')
         tag = soup.find('a')
-        
-    return tag['href']    
+
+    return tag['href'].encode('utf-8')    
 
 def get_viewstate_and_eventvalidation(i_html):
     '''
@@ -142,3 +150,17 @@ def post_common_data():
         'ctl00$ContentPlaceHolder1$ddlIndx':'S&P BSE SENSEX'
     }
     return data
+
+def referer_none_test():
+    i_sec = 539468
+    print get_market_cap_and_name(i_sec)        
+    i_sec = 539446
+    print get_market_cap_and_name(i_sec)        
+    
+def unicode_url_test():
+    i_sec = 533316
+    print get_market_cap_and_name(i_sec)    
+    
+if __name__ == '__main__':
+    unicode_url_test()
+    referer_none_test()
